@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EFFECTIF CAMPO</title>
+  <title>POINTAGE CAMPO</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -169,21 +169,33 @@
     #downloadExcel {
       margin-right: 20px;
     }
+    .table-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.highlight {
+    background-color: red; /* تلوين السطر باللون الأحمر */
+}
+
+
   </style>
 </head>
 <body>
   <div class="button-container">
-    <button id="downloadExcel">Téléchargez Excel</button>
-    <button id="takeScreenshot">Téléchargez Image</button>
+    <button id="takeScreenshot1" onclick="downloadExcel()">Envoyer</button>
+    <button id="takeScreenshot1" onclick="downloadExcel1()">Téléchargez Excel</button>
+    <button id="downloadExcel" style="display: none;">Téléchargez Excel</button>
+    <button id="takeScreenshot" style="display: none;">Téléchargez Image</button>
     <button id="takeScreenshot1" onclick="copyLink()">Copier le lien</button>
   </div>
   <div style="text-align:center; margin: 20px;">
     <strong>Heures totales: <span id="totalHours">0</span> H</strong> |
     <strong>Nombre Total de ouvriers: <span id="rowCount">0</span> PRS</strong>
   </div>
-  
   <div id="result"></div>
-
+  <div class="table-container">
   <table id="dataTable">
     <thead>
       <tr>
@@ -199,7 +211,7 @@
     </thead>
     <tbody></tbody>
   </table>
-
+</div>
   <div id="myModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -289,34 +301,51 @@
     fetch(webAppUrl + '?action=getData')
         .then(response => response.json())
         .then(data => {
-            let tableBody = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
-            tableBody.innerHTML = '';  
+          let tableBody = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
+tableBody.innerHTML = '';  
 
-            let totalHours = 0;
-            let rowCount = 0;
+let totalHours = 0;
+let rowCount = 0;
 
-            data.forEach(function(row, index) {
-                if (row[5] === "FINCA 8") {  
-                    let tr = document.createElement("tr");
+data.forEach(function(row, index) {
+    if (row[5] === "FINCA 8") {
+        let tr = document.createElement("tr");
 
-                    row.forEach(function(cell, colIndex) {
-                        let td = document.createElement("td");
+        row.forEach(function(cell, colIndex) {
+            let td = document.createElement("td");
 
-                        if (colIndex === 4) { 
-                            let date = new Date(cell);
-                            let day = String(date.getDate()).padStart(2, '0');
-                            let month = String(date.getMonth() + 1).padStart(2, '0');
-                            let year = date.getFullYear();
-                            td.textContent = `${day}/${month}/${year}`;
-                        } else if (colIndex === 3) {  
-                            totalHours += parseFloat(cell) || 0;
-                            td.textContent = cell;
-                        } else {
-                            td.textContent = cell;
-                        }
+          
+            if (colIndex === 4) {
+                let date = new Date(cell);
+                let day = String(date.getDate()).padStart(2, '0');
+                let month = String(date.getMonth() + 1).padStart(2, '0');
+                let year = date.getFullYear();
+                td.textContent = `${day}/${month}/${year}`;  
+            } else if (colIndex === 3) {  
+                totalHours += parseFloat(cell) || 0;
+                td.textContent = cell;
+            } else {
+                td.textContent = cell; 
+            }
 
-                        tr.appendChild(td);
-                    });
+            if (colIndex === 6 && cell !== "") {
+                td.style.backgroundColor = "green";
+                td.style.color = "white";
+            }
+
+            if (colIndex === 7 && cell === "NON") {
+             
+                tr.style.color = "red"; 
+                tr.style.fontSize = "20px";
+                tr.style.fontWeight = "bold"; 
+                
+            }
+            if (colIndex === 7) {
+                td.style.display = "none";  
+            }
+            tr.appendChild(td);
+        });
+
 
                     let tdActions = document.createElement("td");
                     let editButton = document.createElement("button");
@@ -349,20 +378,25 @@
 
 
 
-    function openModal(index, row) {
-      document.getElementById("matricule").value = row[0]; 
-      document.getElementById("nombre").value = row[1]; 
-      document.getElementById("equipe").value = row[2];
-      document.getElementById("hours").value = row[3]; 
-      document.getElementById("date").value = row[4];
-      document.getElementById("finca").value = row[5]; 
-      document.getElementById("situation").value = row[6];
-      modal.style.display = "block";
-      
-      window.currentRowIndex = index;
-    }
+function openModal(index, row) {
+    document.getElementById("matricule").value = row[0]; 
+    document.getElementById("nombre").value = row[1]; 
+    document.getElementById("equipe").value = row[2];
+    document.getElementById("hours").value = row[3]; 
+    
+    
+    let date = new Date(row[4]);
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset()); 
+    document.getElementById("date").value = date.toISOString().split('T')[0]; 
+    
+    document.getElementById("finca").value = row[5]; 
+    document.getElementById("situation").value = row[6];
+    modal.style.display = "block";
+    
+    window.currentRowIndex = index;
+}
 
-    function updateData() {
+function updateData() {
     const matricule = document.getElementById("matricule").value;
     const nombre = document.getElementById("nombre").value;
     const equipe = document.getElementById("equipe").value;
@@ -371,12 +405,10 @@
     const finca = document.getElementById("finca").value;
     const situation = document.getElementById("situation").value;
 
-  
     fetch(webAppUrl + '?action=updateData&index=' + window.currentRowIndex + '&matricule=' + matricule + '&nombre=' + nombre + '&equipe=' + equipe + '&hours=' + hours + '&date=' + date + '&finca=' + finca + '&situation=' + situation)
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                
                 modal.style.display = "none"; 
                 loadData(); 
             } else {
@@ -388,6 +420,23 @@
             console.error("Update error: ", error);
         });
 }
+function highlightRows() {
+    var table = document.getElementById("dataTable");
+    var rows = table.getElementsByTagName("tr");
+
+    for (var i = 1; i < rows.length; i++) { // بدءًا من الصف الأول (تخطي العنوان)
+        var cells = rows[i].getElementsByTagName("td");
+        var situationCell = cells[7]; // تأكد من أن العمود 3 هو عمود SITUATION (والذي يعد الرقم 4 من اليسار)
+
+        if (situationCell && situationCell.innerText.trim() === "NON") {
+            rows[i].classList.add("highlight"); // إضافة الفئة لتلوين السطر
+        }
+    }
+}
+
+// استدعاء الدالة بعد تحميل الصفحة
+window.onload = highlightRows;
+
 
 
     function deleteRow(index) {
@@ -472,6 +521,144 @@
       document.addEventListener('DOMContentLoaded', loadData);
 
     loadData(); 
+    
+    function downloadExcel() {
+    fetch(webAppUrl + '?action=getData')
+        .then(response => response.json())
+        .then(data => {
+            
+            let filteredData = data
+                .filter(row => row[5] === "FINCA 8")
+                .map(row => [row[0], row[1], row[2], row[3], formatDate(row[4]), row[5]]);
+
+            if (filteredData.length < 2) {
+                alert("PAS DES DONNEES");
+                return;
+            }
+
+            let rawDate = filteredData[1][4]; 
+            let formattedDate = formatDate(rawDate);
+
+            let headers = ["MATRICULE", "NOMBRE", "EQUIPE", "HOURS", "DATE", "FINCA"];
+
+            let ws = XLSX.utils.aoa_to_sheet([headers, ...filteredData]);
+
+            ws['!autofilter'] = { ref: `A1:F${filteredData.length + 1}` };
+
+            let colWidths = headers.map((_, colIndex) => ({
+                wch: Math.max(
+                    ...filteredData.map(row => (row[colIndex] ? row[colIndex].toString().length : 10)),
+                    headers[colIndex].length
+                ) + 2
+            }));
+            ws['!cols'] = colWidths;
+
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Données");
+
+            let wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            let blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+            let fileName = `Pointage - ${formattedDate}.xlsx`;
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href); 
+
+            sendToTelegram(blob, fileName);
+        })
+        .catch(error => {
+            console.error("Erreur lors de la récupération des données :", error);
+            alert("Une erreur est survenue lors du téléchargement des données.");
+        });
+}
+
+function downloadExcel1() {
+    fetch(webAppUrl + '?action=getData')
+        .then(response => response.json())
+        .then(data => {
+            
+            let filteredData = data
+                .filter(row => row[5] === "FINCA 8")
+                .map(row => [row[0], row[1], row[2], row[3], formatDate(row[4]), row[5]]);
+
+            if (filteredData.length < 2) {
+                alert("PAS DES DONNEES");
+                return;
+            }
+
+            let rawDate = filteredData[1][4]; 
+            let formattedDate = formatDate(rawDate);
+
+            let headers = ["MATRICULE", "NOMBRE", "EQUIPE", "HOURS", "DATE", "FINCA"];
+
+            let ws = XLSX.utils.aoa_to_sheet([headers, ...filteredData]);
+
+            ws['!autofilter'] = { ref: `A1:F${filteredData.length + 1}` };
+
+            let colWidths = headers.map((_, colIndex) => ({
+                wch: Math.max(
+                    ...filteredData.map(row => (row[colIndex] ? row[colIndex].toString().length : 10)),
+                    headers[colIndex].length
+                ) + 2
+            }));
+            ws['!cols'] = colWidths;
+
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Données");
+
+            let wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            let blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+            let fileName = `Pointage - ${formattedDate}.xlsx`;
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href); 
+
+            
+        })
+        .catch(error => {
+            console.error("Erreur lors de la récupération des données :", error);
+            alert("Une erreur est survenue lors du téléchargement des données.");
+        });
+}
+function formatDate(rawDate) {
+    if (!rawDate) return "";
+    let date = new Date(rawDate);
+    if (isNaN(date.getTime())) return rawDate; 
+
+    let day = String(date.getDate()).padStart(2, '0');
+    let month = String(date.getMonth() + 1).padStart(2, '0');
+    let year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+
+function sendToTelegram(fileBlob, fileName) {
+    let botToken = "7561853556:AAElzI6FYzNb6yNUV6EA_Bnzkec2hUrcP70";
+    let chatId = "-1002408201424";
+
+    let formData = new FormData();
+    formData.append("chat_id", chatId);
+    formData.append("document", fileBlob, fileName);
+
+    fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => console.log("c ok:", data))
+    .catch(error => console.error("errour:", error));
+}
+
+
   </script>
 </body>
 </html>
