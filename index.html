@@ -289,7 +289,7 @@
     };
 
     const webAppUrl = "https://script.google.com/macros/s/AKfycbwzHWPjKfWKo-01iWjHVopqLHuzDFASz8ud5_G7J-seBKQJCLTOaBGkrprkKXiPAFhtSQ/exec"; 
-
+    const webAppUrl1 = "https://script.google.com/macros/s/AKfycbyRyuoVhrufZ4wzND6Z6fU3tB4d7bhRNrvRrDxB_NSrZeHfsMNW7CS72tppoEf_SeKePQ/exec"; 
     var modal = document.getElementById("myModal");
     var span = document.getElementsByClassName("close")[0];
 
@@ -405,7 +405,7 @@ function updateData() {
     const finca = document.getElementById("finca").value;
     const situation = document.getElementById("situation").value;
 
-    fetch(webAppUrl + '?action=updateData&index=' + window.currentRowIndex + '&matricule=' + matricule + '&nombre=' + nombre + '&equipe=' + equipe + '&hours=' + hours + '&date=' + date + '&finca=' + finca + '&situation=' + situation)
+    fetch(webAppUrl1 + '?action=updateData&index=' + window.currentRowIndex + '&matricule=' + matricule + '&nombre=' + nombre + '&equipe=' + equipe + '&hours=' + hours + '&date=' + date + '&finca=' + finca + '&situation=' + situation)
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
